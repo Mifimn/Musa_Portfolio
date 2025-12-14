@@ -10,6 +10,7 @@ import {
 import { 
   Github, 
   Instagram, 
+  Linkedin, 
   ArrowUpRight, 
   Download, 
   Mail, 
@@ -38,7 +39,49 @@ function cn(...classes) {
 
 // --- Components ---
 
-// 1. Background Grid Pattern
+// 1. UNIQUE BACKGROUND GENERATOR
+// This creates a special pattern for every project based on its ID/Index
+const ProjectBackground = ({ index }) => {
+  const variant = index % 5; // 5 different styles
+  const rotation = (index * 25) % 360; // Unique rotation for each
+  const scale = 1 + (index % 3) * 0.2; // Unique scale
+
+  return (
+    <div className="absolute inset-0 bg-neutral-950 flex items-center justify-center overflow-hidden opacity-20 transition-opacity group-hover:opacity-40 duration-500">
+      <div 
+        className="w-full h-full p-8 flex flex-wrap content-center justify-center gap-4"
+        style={{ transform: `rotate(${rotation}deg) scale(${scale})` }}
+      >
+        {/* Style 1: Matrix Dots */}
+        {variant === 0 && [...Array(40)].map((_, i) => (
+          <div key={i} className="w-1 h-1 bg-white rounded-full" />
+        ))}
+
+        {/* Style 2: Tech Dashes */}
+        {variant === 1 && [...Array(20)].map((_, i) => (
+          <div key={i} className="w-8 h-1 bg-neutral-700/50" />
+        ))}
+
+        {/* Style 3: Hollow Squares */}
+        {variant === 2 && [...Array(10)].map((_, i) => (
+          <div key={i} className="w-12 h-12 border border-neutral-800" />
+        ))}
+
+        {/* Style 4: Diagonal Rain */}
+        {variant === 3 && [...Array(15)].map((_, i) => (
+          <div key={i} className="w-32 h-[1px] bg-white -rotate-45" />
+        ))}
+
+        {/* Style 5: Binary Blocks */}
+        {variant === 4 && [...Array(12)].map((_, i) => (
+          <div key={i} className={`w-4 h-4 ${i % 2 === 0 ? 'bg-white' : 'bg-transparent border border-white'}`} />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// 2. Background Grid Pattern
 const GridBackground = () => (
   <div className="fixed inset-0 z-0 pointer-events-none opacity-[0.03]" 
        style={{
@@ -49,7 +92,7 @@ const GridBackground = () => (
   />
 );
 
-// 2. Magnetic Button (Updated to handle Download props correctly)
+// 3. Magnetic Button
 const MagneticButton = ({ children, className, onClick, href, download, target }) => {
   const ref = useRef(null);
   const x = useMotionValue(0);
@@ -89,7 +132,7 @@ const MagneticButton = ({ children, className, onClick, href, download, target }
   );
 };
 
-// 3. Kinetic Typography (Marquee)
+// 4. Kinetic Typography (Marquee)
 const Marquee = ({ text, direction = 1, speed = 5 }) => {
   const x = useMotionValue(0);
   const animationRef = useRef(null);
@@ -118,7 +161,7 @@ const Marquee = ({ text, direction = 1, speed = 5 }) => {
   );
 };
 
-// 4. Skill Card
+// 5. Skill Card
 const SkillCard = ({ name, icon: Icon, level }) => (
   <motion.div 
     whileHover={{ y: -5, backgroundColor: "#111" }}
@@ -132,7 +175,7 @@ const SkillCard = ({ name, icon: Icon, level }) => (
   </motion.div>
 );
 
-// 5. Rotating Graphic Element
+// 6. Rotating Graphic Element
 const RotatingShape = () => (
   <motion.div 
     animate={{ rotate: 360 }}
@@ -146,7 +189,7 @@ const RotatingShape = () => (
   </motion.div>
 );
 
-// 6. Custom Cursor
+// 7. Custom Cursor
 const CustomCursor = () => {
   const mouseX = useMotionValue(-100);
   const mouseY = useMotionValue(-100);
@@ -170,7 +213,7 @@ const CustomCursor = () => {
   );
 };
 
-// 7. Epic Geometric Triangle
+// 8. Epic Geometric Triangle
 const EpicTriangle = ({ size = 40, className, ...props }) => (
   <svg 
     width={size} 
@@ -190,7 +233,7 @@ const EpicTriangle = ({ size = 40, className, ...props }) => (
   </svg>
 );
 
-// 8. 3D Logo Component
+// 9. 3D Logo Component
 const ThreeDLogo = () => (
   <motion.div
     style={{ transformStyle: "preserve-3d" }}
@@ -205,6 +248,7 @@ const ThreeDLogo = () => (
 // --- Constants ---
 const WHATSAPP_LINK = "https://wa.me/2348023169274?text=Hello%20Mifimn,%20I%20have%20a%20project%20idea%20I'd%20like%20to%20discuss.";
 const EMAIL_ADDRESS = "mailto:shittumifimn0807@gmail.com";
+const LINKEDIN_LINK = "https://www.linkedin.com/in/mifimn-shittu";
 
 const App = () => {
   const [repos, setRepos] = useState([]);
@@ -215,6 +259,9 @@ const App = () => {
       .then(data => setRepos(Array.isArray(data) ? data : []))
       .catch(err => console.error(err));
   }, []);
+
+  // Filter repos that have a 'homepage' (Website URL) set on GitHub
+  const liveProjects = repos.filter(repo => repo.homepage && repo.homepage.length > 0);
 
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30 });
@@ -235,7 +282,7 @@ const App = () => {
           <div className="text-xl font-black tracking-tighter">MIFIMN</div>
         </div>
 
-        {/* DOWNLOAD BUTTON FIX */}
+        {/* Direct Link to Public File */}
         <MagneticButton 
           href="/Mifimn_CV.pdf" 
           download="Mifimn_CV.pdf"
@@ -293,19 +340,13 @@ const App = () => {
              <MagneticButton href="https://github.com/Mifimn/" className="p-4 bg-white text-black hover:scale-110 transition-transform">
                <Github size={24} />
              </MagneticButton>
+             <MagneticButton href={LINKEDIN_LINK} className="p-4 bg-[#0077b5] text-white hover:scale-110 transition-transform border border-transparent">
+               <Linkedin size={24} fill="currentColor" />
+             </MagneticButton>
              <MagneticButton href="https://instagram.com/mifimn_01" className="p-4 border border-white hover:bg-white hover:text-black transition-colors">
                <Instagram size={24} />
              </MagneticButton>
           </motion.div>
-        </div>
-
-        <div className="absolute bottom-10 left-10 hidden md:block">
-          <Cpu className="text-neutral-800 w-24 h-24" strokeWidth={1} />
-        </div>
-        <div className="absolute top-32 right-10 hidden md:block">
-           <div className="grid grid-cols-3 gap-1">
-             {[...Array(9)].map((_, i) => <div key={i} className="w-1 h-1 bg-neutral-700" />)}
-           </div>
         </div>
       </section>
 
@@ -313,7 +354,7 @@ const App = () => {
       <section className="border-b border-neutral-900 bg-neutral-950">
         <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-neutral-900">
           {[
-            { label: "Experience", value: "4+ Years", icon: Briefcase },
+            { label: "Experience", value: "3+ Years", icon: Briefcase },
             { label: "Projects", value: "20+ Done", icon: Code2 },
             { label: "Tech Stack", value: "Fullstack", icon: Layers },
             { label: "Location", value: "Nigeria", icon: Globe },
@@ -386,14 +427,63 @@ const App = () => {
         </div>
       </section>
 
-      {/* FEATURED PROJECTS */}
-      <section className="py-24 px-6 max-w-7xl mx-auto relative">
+      {/* --- SECTION 1: LIVE DEPLOYMENTS (Vercel) --- */}
+      {liveProjects.length > 0 && (
+        <section className="py-24 px-6 max-w-7xl mx-auto relative border-t border-neutral-900">
+          <div className="flex justify-between items-end mb-16 relative z-10">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
+                <span className="text-green-500 font-mono text-sm tracking-widest">LIVE SERVERS</span>
+              </div>
+              <h2 className="text-5xl md:text-7xl font-black tracking-tighter">DEPLOYED<br/>SYSTEMS</h2>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {liveProjects.map((repo, i) => (
+              <motion.a
+                key={repo.id}
+                href={repo.homepage}
+                target="_blank"
+                rel="noreferrer"
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ delay: i * 0.1 }}
+                whileHover={{ y: -10 }}
+                className="bg-neutral-900 border border-neutral-800 p-0 flex flex-col justify-between h-[300px] group hover:border-white transition-colors relative overflow-hidden"
+              >
+                {/* Visual Background Pattern */}
+                <ProjectBackground index={i} />
+
+                {/* Content Overlay */}
+                <div className="relative z-10 p-6 flex flex-col justify-between h-full bg-gradient-to-t from-black via-black/80 to-transparent">
+                  <div className="flex justify-between items-start">
+                    <Globe className="text-green-500" />
+                    <ArrowUpRight className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold mb-2 text-white">{repo.name}</h3>
+                    <p className="text-neutral-400 text-xs font-mono truncate">{repo.homepage.replace(/^https?:\/\//, '')}</p>
+                    <div className="mt-4 inline-block bg-green-900/30 border border-green-800 text-green-400 text-[10px] px-2 py-1 rounded">
+                      VISIT LIVE SITE
+                    </div>
+                  </div>
+                </div>
+              </motion.a>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* --- SECTION 2: SOURCE CODE (GitHub) --- */}
+      <section className="py-24 px-6 max-w-7xl mx-auto relative border-t border-neutral-900">
         <motion.div style={{ rotate }} className="absolute -left-20 top-20 text-[20rem] opacity-[0.02] font-black pointer-events-none select-none">
-          WORK
+          CODE
         </motion.div>
 
         <div className="flex justify-between items-end mb-16 relative z-10">
-          <h2 className="text-5xl md:text-7xl font-black tracking-tighter">SELECTED<br/>PROJECTS</h2>
+          <h2 className="text-5xl md:text-7xl font-black tracking-tighter text-neutral-500">SOURCE<br/>CODE</h2>
           <MagneticButton href="https://github.com/Mifimn" className="hidden md:flex items-center gap-2 border-b border-white pb-1">
              ALL REPOSITORIES <ArrowUpRight size={16} />
           </MagneticButton>
@@ -401,44 +491,22 @@ const App = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {repos.length > 0 ? repos.map((repo, i) => {
-            const variant = i % 3; 
-            const rotation = (i + 1) * 15;
-
             return (
               <motion.a
                 key={repo.id}
-                href={repo.html_url}
+                href={repo.html_url} // LINKS TO GITHUB
                 target="_blank"
                 rel="noreferrer"
                 initial={{ opacity: 0, y: 50 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
-                className="group relative block bg-neutral-900 aspect-[4/3] overflow-hidden border border-neutral-800"
+                className="group relative block bg-neutral-900 aspect-[4/3] overflow-hidden border border-neutral-800 hover:border-neutral-600 transition-colors"
               >
-                <div className="absolute inset-0 bg-neutral-950 flex items-center justify-center group-hover:scale-105 transition-transform duration-700 overflow-hidden">
-                  <div 
-                    className="opacity-20 w-full h-full p-8 scale-150 flex flex-wrap content-center justify-center gap-2"
-                    style={{ transform: `rotate(${rotation}deg) scale(1.5)` }}
-                  >
-                    {variant === 0 && (
-                      [...Array(64)].map((_, j) => (
-                        <div key={j} className={`rounded-full ${j % 2 === 0 ? 'bg-white' : 'bg-neutral-800'} w-2 h-2`} />
-                      ))
-                    )}
-                    {variant === 1 && (
-                      [...Array(32)].map((_, j) => (
-                        <div key={j} className={`h-1 w-8 ${j % 3 === 0 ? 'bg-white' : 'bg-neutral-800'}`} />
-                      ))
-                    )}
-                    {variant === 2 && (
-                       [...Array(16)].map((_, j) => (
-                        <div key={j} className={`w-8 h-8 ${j % 2 === 0 ? 'border border-white' : 'bg-neutral-800'}`} />
-                      ))
-                    )}
-                  </div>
-                </div>
+                {/* Visual Background Pattern */}
+                <ProjectBackground index={i + 5} /> 
 
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent p-8 flex flex-col justify-end">
+                {/* Content Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent p-8 flex flex-col justify-end z-10">
                   <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform">
                     <div className="flex items-center gap-2 text-xs font-mono text-neutral-400 mb-2">
                       <Terminal size={12} /> {repo.language || "CODE"}
@@ -474,7 +542,7 @@ const App = () => {
             READY TO<br/>COLLABORATE?
           </h2>
 
-          <div className="flex flex-col md:flex-row gap-6 justify-center">
+          <div className="flex flex-col md:flex-row gap-6 justify-center items-center">
             <MagneticButton 
               href={WHATSAPP_LINK}
               className="bg-white text-black text-lg font-bold px-8 py-4 hover:bg-neutral-200 transition-colors flex items-center gap-2"
@@ -487,6 +555,10 @@ const App = () => {
             >
               <Mail size={20} /> SEND EMAIL
             </MagneticButton>
+             {/* FOOTER LINKEDIN BUTTON */}
+             <MagneticButton href={LINKEDIN_LINK} className="p-4 bg-[#0077b5] text-white hover:scale-110 transition-transform rounded-full">
+               <Linkedin size={24} fill="currentColor" />
+             </MagneticButton>
           </div>
         </div>
 
