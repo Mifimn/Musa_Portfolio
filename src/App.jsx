@@ -32,6 +32,9 @@ import {
   Triangle as TriangleIcon 
 } from 'lucide-react';
 
+// --- IMPORTANT: Import the PDF file here ---
+// import cvFile from './Mifimn_CV.pdf'; // Use direct link /Mifimn_CV.pdf instead
+
 // --- Utility ---
 function cn(...classes) {
   return classes.filter(Boolean).join(' ');
@@ -39,12 +42,11 @@ function cn(...classes) {
 
 // --- Components ---
 
-// 1. UNIQUE BACKGROUND GENERATOR
-// This creates a special pattern for every project based on its ID/Index
+// 1. UNIQUE BACKGROUND GENERATOR (For GitHub Code Section)
 const ProjectBackground = ({ index }) => {
-  const variant = index % 5; // 5 different styles
-  const rotation = (index * 25) % 360; // Unique rotation for each
-  const scale = 1 + (index % 3) * 0.2; // Unique scale
+  const variant = index % 5; 
+  const rotation = (index * 25) % 360; 
+  const scale = 1 + (index % 3) * 0.2; 
 
   return (
     <div className="absolute inset-0 bg-neutral-950 flex items-center justify-center overflow-hidden opacity-20 transition-opacity group-hover:opacity-40 duration-500">
@@ -52,30 +54,11 @@ const ProjectBackground = ({ index }) => {
         className="w-full h-full p-8 flex flex-wrap content-center justify-center gap-4"
         style={{ transform: `rotate(${rotation}deg) scale(${scale})` }}
       >
-        {/* Style 1: Matrix Dots */}
-        {variant === 0 && [...Array(40)].map((_, i) => (
-          <div key={i} className="w-1 h-1 bg-white rounded-full" />
-        ))}
-
-        {/* Style 2: Tech Dashes */}
-        {variant === 1 && [...Array(20)].map((_, i) => (
-          <div key={i} className="w-8 h-1 bg-neutral-700/50" />
-        ))}
-
-        {/* Style 3: Hollow Squares */}
-        {variant === 2 && [...Array(10)].map((_, i) => (
-          <div key={i} className="w-12 h-12 border border-neutral-800" />
-        ))}
-
-        {/* Style 4: Diagonal Rain */}
-        {variant === 3 && [...Array(15)].map((_, i) => (
-          <div key={i} className="w-32 h-[1px] bg-white -rotate-45" />
-        ))}
-
-        {/* Style 5: Binary Blocks */}
-        {variant === 4 && [...Array(12)].map((_, i) => (
-          <div key={i} className={`w-4 h-4 ${i % 2 === 0 ? 'bg-white' : 'bg-transparent border border-white'}`} />
-        ))}
+        {variant === 0 && [...Array(40)].map((_, i) => <div key={i} className="w-1 h-1 bg-white rounded-full" />)}
+        {variant === 1 && [...Array(20)].map((_, i) => <div key={i} className="w-8 h-1 bg-neutral-700/50" />)}
+        {variant === 2 && [...Array(10)].map((_, i) => <div key={i} className="w-12 h-12 border border-neutral-800" />)}
+        {variant === 3 && [...Array(15)].map((_, i) => <div key={i} className="w-32 h-[1px] bg-white -rotate-45" />)}
+        {variant === 4 && [...Array(12)].map((_, i) => <div key={i} className={`w-4 h-4 ${i % 2 === 0 ? 'bg-white' : 'bg-transparent border border-white'}`} />)}
       </div>
     </div>
   );
@@ -193,7 +176,7 @@ const RotatingShape = () => (
 const CustomCursor = () => {
   const mouseX = useMotionValue(-100);
   const mouseY = useMotionValue(-100);
-
+  
   useEffect(() => {
     const moveCursor = (e) => {
       mouseX.set(e.clientX - 16);
@@ -252,7 +235,7 @@ const LINKEDIN_LINK = "https://www.linkedin.com/in/mifimn-shittu";
 
 const App = () => {
   const [repos, setRepos] = useState([]);
-
+  
   useEffect(() => {
     fetch('https://api.github.com/users/Mifimn/repos?sort=updated&per_page=12')
       .then(res => res.json())
@@ -271,7 +254,7 @@ const App = () => {
     <div className="bg-black min-h-screen text-white font-sans selection:bg-white selection:text-black cursor-none md:cursor-auto overflow-x-hidden">
       <CustomCursor />
       <GridBackground />
-
+      
       {/* Progress Bar */}
       <motion.div className="fixed top-0 left-0 right-0 h-1 bg-white origin-left z-50" style={{ scaleX }} />
 
@@ -281,7 +264,7 @@ const App = () => {
           <ThreeDLogo />
           <div className="text-xl font-black tracking-tighter">MIFIMN</div>
         </div>
-
+        
         {/* Direct Link to Public File */}
         <MagneticButton 
           href="/Mifimn_CV.pdf" 
@@ -296,7 +279,7 @@ const App = () => {
       {/* HERO SECTION */}
       <section className="relative h-screen flex flex-col justify-center items-center overflow-hidden border-b border-neutral-900">
         <RotatingShape />
-
+        
         <div className="absolute inset-0 flex flex-col justify-center gap-20">
           <Marquee text="DESIGN CODE BUILD" direction={1} speed={2} />
           <Marquee text="MIFIMN CREATIVE" direction={-1} speed={2} />
@@ -330,7 +313,7 @@ const App = () => {
             // FULLSTACK DEVELOPER & UI ARCHITECT<br/>
             Transforming concepts into complex digital realities.
           </motion.p>
-
+          
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -376,7 +359,7 @@ const App = () => {
            <PenTool size={32} />
            <h2 className="text-4xl md:text-5xl font-black tracking-tighter">THE ARSENAL</h2>
         </div>
-
+        
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-0 border-t border-l border-neutral-800">
           <SkillCard name="React" icon={Code2} level="95%" />
           <SkillCard name="Next.js" icon={Monitor} level="90%" />
@@ -427,7 +410,7 @@ const App = () => {
         </div>
       </section>
 
-      {/* --- SECTION 1: LIVE DEPLOYMENTS (Vercel) --- */}
+      {/* --- SECTION 1: LIVE DEPLOYMENTS (With SCREENSHOTS) --- */}
       {liveProjects.length > 0 && (
         <section className="py-24 px-6 max-w-7xl mx-auto relative border-t border-neutral-900">
           <div className="flex justify-between items-end mb-16 relative z-10">
@@ -453,19 +436,32 @@ const App = () => {
                 whileHover={{ y: -10 }}
                 className="bg-neutral-900 border border-neutral-800 p-0 flex flex-col justify-between h-[300px] group hover:border-white transition-colors relative overflow-hidden"
               >
-                {/* Visual Background Pattern */}
-                <ProjectBackground index={i} />
+                {/* Visual Background: LIVE SCREENSHOT */}
+                <div className="absolute inset-0 bg-neutral-950 flex items-center justify-center overflow-hidden">
+                   {/* Fallback pattern underneath */}
+                   <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
+                   
+                   {/* AUTOMATED SCREENSHOT (Using WordPress mshots API - Free & Fast) */}
+                   <img 
+                     src={`https://s0.wp.com/mshots/v1/${encodeURIComponent(repo.homepage)}?w=800&h=600`}
+                     alt={`${repo.name} Preview`}
+                     className="w-full h-full object-cover object-top opacity-50 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500"
+                     onError={(e) => {
+                       e.target.style.display = 'none'; // Hide broken image if fetch fails
+                     }}
+                   />
+                </div>
 
                 {/* Content Overlay */}
-                <div className="relative z-10 p-6 flex flex-col justify-between h-full bg-gradient-to-t from-black via-black/80 to-transparent">
+                <div className="relative z-10 p-6 flex flex-col justify-between h-full bg-gradient-to-t from-black via-black/60 to-transparent">
                   <div className="flex justify-between items-start">
-                    <Globe className="text-green-500" />
+                    <Globe className="text-green-500 drop-shadow-md" />
                     <ArrowUpRight className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
                   <div>
-                    <h3 className="text-2xl font-bold mb-2 text-white">{repo.name}</h3>
-                    <p className="text-neutral-400 text-xs font-mono truncate">{repo.homepage.replace(/^https?:\/\//, '')}</p>
-                    <div className="mt-4 inline-block bg-green-900/30 border border-green-800 text-green-400 text-[10px] px-2 py-1 rounded">
+                    <h3 className="text-2xl font-bold mb-2 text-white drop-shadow-md">{repo.name}</h3>
+                    <p className="text-neutral-300 text-xs font-mono truncate">{repo.homepage.replace(/^https?:\/\//, '')}</p>
+                    <div className="mt-4 inline-block bg-green-900/80 backdrop-blur-sm border border-green-800 text-green-400 text-[10px] px-2 py-1 rounded">
                       VISIT LIVE SITE
                     </div>
                   </div>
@@ -541,7 +537,7 @@ const App = () => {
           <h2 className="text-5xl md:text-8xl font-black mb-8 tracking-tighter">
             READY TO<br/>COLLABORATE?
           </h2>
-
+          
           <div className="flex flex-col md:flex-row gap-6 justify-center items-center">
             <MagneticButton 
               href={WHATSAPP_LINK}
@@ -555,13 +551,9 @@ const App = () => {
             >
               <Mail size={20} /> SEND EMAIL
             </MagneticButton>
-             {/* FOOTER LINKEDIN BUTTON */}
-             <MagneticButton href={LINKEDIN_LINK} className="p-4 bg-[#0077b5] text-white hover:scale-110 transition-transform rounded-full">
-               <Linkedin size={24} fill="currentColor" />
-             </MagneticButton>
           </div>
         </div>
-
+        
         <footer className="absolute bottom-6 w-full px-6 flex justify-between items-center text-xs font-mono text-neutral-600 uppercase">
           <span>© 2025 Mifimn Brand</span>
           <span>Made in Nigeria</span>
