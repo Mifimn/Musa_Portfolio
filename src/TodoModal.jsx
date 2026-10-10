@@ -7,7 +7,6 @@ import {
   Check, 
   Bell, 
   Clock, 
-  Play,
   Volume2
 } from 'lucide-react';
 
@@ -33,36 +32,33 @@ const TodoModal = ({ isOpen, onClose }) => {
     }
   }, [isOpen]);
 
-  // Web Audio synthesizer for crisp alert chime (No external MP3 file required)
+  // Arcade "Coin / Success" chime repeated 3 times in succession
   const playNotificationSound = () => {
     try {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       if (!AudioCtx) return;
       const ctx = new AudioCtx();
 
-      // Tone 1: 587.33 Hz (D5)
-      const osc1 = ctx.createOscillator();
-      const gain1 = ctx.createGain();
-      osc1.type = 'sine';
-      osc1.frequency.setValueAtTime(587.33, ctx.currentTime);
-      gain1.gain.setValueAtTime(0.2, ctx.currentTime);
-      gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
-      osc1.connect(gain1);
-      gain1.connect(ctx.destination);
-      osc1.start(ctx.currentTime);
-      osc1.stop(ctx.currentTime + 0.35);
+      // Trigger 3 consecutive coin chimes (spaced 0.22s apart)
+      [0, 0.22, 0.44].forEach((delay) => {
+        const startTime = ctx.currentTime + delay;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
 
-      // Tone 2: 880 Hz (A5 - harmonic chime)
-      const osc2 = ctx.createOscillator();
-      const gain2 = ctx.createGain();
-      osc2.type = 'sine';
-      osc2.frequency.setValueAtTime(880, ctx.currentTime + 0.15);
-      gain2.gain.setValueAtTime(0.25, ctx.currentTime + 0.15);
-      gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
-      osc2.connect(gain2);
-      gain2.connect(ctx.destination);
-      osc2.start(ctx.currentTime + 0.15);
-      osc2.stop(ctx.currentTime + 0.6);
+        osc.type = 'triangle';
+        // Note jump: B5 (987.77 Hz) -> E6 (1318.51 Hz)
+        osc.frequency.setValueAtTime(987.77, startTime);
+        osc.frequency.setValueAtTime(1318.51, startTime + 0.08);
+
+        gain.gain.setValueAtTime(0.25, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.26);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(startTime);
+        osc.stop(startTime + 0.26);
+      });
     } catch (err) {
       console.warn('Audio playback error:', err);
     }
@@ -70,7 +66,7 @@ const TodoModal = ({ isOpen, onClose }) => {
 
   // Mobile-compatible notification trigger with sound & vibration
   const triggerNotification = async (title, body) => {
-    // 1. Play synthesized audio chime
+    // 1. Play synthesized 3x coin chime
     playNotificationSound();
 
     if (!('Notification' in window) || Notification.permission !== 'granted') return;
@@ -83,7 +79,7 @@ const TodoModal = ({ isOpen, onClose }) => {
           body,
           icon: '/logo.png',
           badge: '/logo.png',
-          vibrate: [200, 100, 200, 100, 200],
+          vibrate: [150, 80, 150, 80, 150],
           tag: 'mifimn-task-reminder',
           silent: false,
         });
@@ -199,7 +195,7 @@ const TodoModal = ({ isOpen, onClose }) => {
                   <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" /> Sound & Alerts Active
                 </span>
                 <button 
-                  onClick={() => triggerNotification('Test Alert', 'Sound and vibration are working.')}
+                  onClick={() => triggerNotification('Test Alert', '3x Coin success chime is active.')}
                   className="bg-neutral-800 hover:bg-neutral-700 text-neutral-300 px-2 py-1 text-[10px] rounded flex items-center gap-1 cursor-pointer"
                 >
                   <Volume2 size={11} /> Test Sound
