@@ -6,9 +6,8 @@ import {
   Trash2, 
   Check, 
   Bell, 
-  Calendar, 
   Clock, 
-  AlertCircle 
+  Play
 } from 'lucide-react';
 
 const TodoModal = ({ isOpen, onClose }) => {
@@ -21,22 +20,44 @@ const TodoModal = ({ isOpen, onClose }) => {
   const [priority, setPriority] = useState('medium');
   const [notifPermission, setNotifPermission] = useState('default');
 
-  // Save tasks to localStorage
+  // Sync tasks with localStorage
   useEffect(() => {
     localStorage.setItem('mifimn_tasks', JSON.stringify(tasks));
   }, [tasks]);
 
-  // Check notification permission on load
+  // Read permission status
   useEffect(() => {
     if ('Notification' in window) {
       setNotifPermission(Notification.permission);
     }
-  }, []);
+  }, [isOpen]);
 
-  // Check tasks every 30 seconds for reminder notifications
+  // Mobile-compatible notification trigger
+  const triggerNotification = async (title, body) => {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+
+    try {
+      if ('serviceWorker' in navigator) {
+        const registration = await navigator.serviceWorker.ready;
+        await registration.showNotification(title, {
+          body,
+          icon: '/logo.png',
+          badge: '/logo.png',
+          vibrate: [200, 100, 200],
+          tag: 'mifimn-task-reminder',
+        });
+      } else {
+        new Notification(title, { body, icon: '/logo.png' });
+      }
+    } catch (err) {
+      console.error('Notification dispatch failed:', err);
+    }
+  };
+
+  // Clock checker (runs every 10 seconds)
   useEffect(() => {
     const interval = setInterval(() => {
-      if (Notification.permission !== 'granted') return;
+      if (notifPermission !== 'granted') return;
 
       const now = new Date();
       const currentHours = String(now.getHours()).padStart(2, '0');
@@ -44,27 +65,26 @@ const TodoModal = ({ isOpen, onClose }) => {
       const currentTimeString = `${currentHours}:${currentMinutes}`;
 
       tasks.forEach((t) => {
-        if (!t.completed && t.time === currentTimeString && !t.notified) {
-          new Notification('Mifimn Reminder', {
-            body: `⏰ Time for: ${t.text}`,
-            icon: '/logo.png',
-          });
+        if (!t.completed && t.time && t.time === currentTimeString && !t.notified) {
+          triggerNotification('Mifimn Reminder', `⏰ Time for: ${t.text}`);
 
-          // Mark notified so it doesn't alert repeatedly within the minute
           setTasks((prev) =>
             prev.map((item) => (item.id === t.id ? { ...item, notified: true } : item))
           );
         }
       });
-    }, 30000);
+    }, 10000);
 
     return () => clearInterval(interval);
-  }, [tasks]);
+  }, [tasks, notifPermission]);
 
   const requestNotification = async () => {
     if ('Notification' in window) {
       const res = await Notification.requestPermission();
       setNotifPermission(res);
+      if (res === 'granted') {
+        triggerNotification('Notifications Enabled', 'Mifimn reminders are now active on your device.');
+      }
     }
   };
 
@@ -117,24 +137,38 @@ const TodoModal = ({ isOpen, onClose }) => {
             </button>
           </div>
 
-          {/* Notification Permission Request */}
-          {notifPermission !== 'granted' && (
-            <div className="my-3 p-2 bg-neutral-900 border border-neutral-800 rounded flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2 text-neutral-300">
-                <Bell size={14} className="text-yellow-500" />
-                <span>Enable notifications for task alerts</span>
-              </div>
-              <button 
-                onClick={requestNotification}
-                className="bg-white text-black px-2 py-1 text-[10px] font-bold rounded"
-              >
-                ENABLE
-              </button>
-            </div>
-          )}
+          {/* Permission / Test Alert Bar */}
+          <div className="my-3 p-2 bg-neutral-900 border border-neutral-800 rounded flex items-center justify-between text-xs">
+            {notifPermission !== 'granted' ? (
+              <>
+                <div className="flex items-center gap-2 text-neutral-300">
+                  <Bell size={14} className="text-yellow-500" />
+                  <span>Enable device notifications</span>
+                </div>
+                <button 
+                  onClick={requestNotification}
+                  className="bg-white text-black px-2.5 py-1 text-[10px] font-bold rounded hover:bg-neutral-200"
+                >
+                  ALLOW
+                </button>
+              </>
+            ) : (
+              <>
+                <span className="text-green-400 text-[11px] flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" /> Alerts Active
+                </span>
+                <button 
+                  onClick={() => triggerNotification('Test Alert', 'Device notifications are working correctly.')}
+                  className="bg-neutral-800 hover:bg-neutral-700 text-neutral-300 px-2 py-1 text-[10px] rounded flex items-center gap-1"
+                >
+                  <Play size={10} /> Test Alert
+                </button>
+              </>
+            )}
+          </div>
 
-          {/* Add Task Input Form */}
-          <form onSubmit={addTask} className="mt-4 mb-4 flex flex-col gap-2 shrink-0">
+          {/* Form */}
+          <form onSubmit={addTask} className="mb-4 flex flex-col gap-2 shrink-0">
             <div className="flex gap-2">
               <input
                 type="text"
@@ -174,7 +208,7 @@ const TodoModal = ({ isOpen, onClose }) => {
             </div>
           </form>
 
-          {/* Task List Container */}
+          {/* List */}
           <div className="overflow-y-auto flex-1 pr-1 space-y-2">
             {tasks.length === 0 ? (
               <div className="text-center py-12 text-neutral-600 text-xs border border-dashed border-neutral-900 rounded">
