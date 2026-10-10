@@ -7,7 +7,8 @@ import {
   Check, 
   Bell, 
   Clock, 
-  Play
+  Play,
+  Volume2
 } from 'lucide-react';
 
 const TodoModal = ({ isOpen, onClose }) => {
@@ -32,10 +33,49 @@ const TodoModal = ({ isOpen, onClose }) => {
     }
   }, [isOpen]);
 
-  // Mobile-compatible notification trigger
+  // Web Audio synthesizer for crisp alert chime (No external MP3 file required)
+  const playNotificationSound = () => {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+
+      // Tone 1: 587.33 Hz (D5)
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(587.33, ctx.currentTime);
+      gain1.gain.setValueAtTime(0.2, ctx.currentTime);
+      gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+      osc1.connect(gain1);
+      gain1.connect(ctx.destination);
+      osc1.start(ctx.currentTime);
+      osc1.stop(ctx.currentTime + 0.35);
+
+      // Tone 2: 880 Hz (A5 - harmonic chime)
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(880, ctx.currentTime + 0.15);
+      gain2.gain.setValueAtTime(0.25, ctx.currentTime + 0.15);
+      gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.start(ctx.currentTime + 0.15);
+      osc2.stop(ctx.currentTime + 0.6);
+    } catch (err) {
+      console.warn('Audio playback error:', err);
+    }
+  };
+
+  // Mobile-compatible notification trigger with sound & vibration
   const triggerNotification = async (title, body) => {
+    // 1. Play synthesized audio chime
+    playNotificationSound();
+
     if (!('Notification' in window) || Notification.permission !== 'granted') return;
 
+    // 2. Dispatch push notification to system tray
     try {
       if ('serviceWorker' in navigator) {
         const registration = await navigator.serviceWorker.ready;
@@ -43,8 +83,9 @@ const TodoModal = ({ isOpen, onClose }) => {
           body,
           icon: '/logo.png',
           badge: '/logo.png',
-          vibrate: [200, 100, 200],
+          vibrate: [200, 100, 200, 100, 200],
           tag: 'mifimn-task-reminder',
+          silent: false,
         });
       } else {
         new Notification(title, { body, icon: '/logo.png' });
@@ -83,7 +124,7 @@ const TodoModal = ({ isOpen, onClose }) => {
       const res = await Notification.requestPermission();
       setNotifPermission(res);
       if (res === 'granted') {
-        triggerNotification('Notifications Enabled', 'Mifimn reminders are now active on your device.');
+        triggerNotification('Notifications Enabled', 'Mifimn reminders and audio alerts are now active.');
       }
     }
   };
@@ -137,7 +178,7 @@ const TodoModal = ({ isOpen, onClose }) => {
             </button>
           </div>
 
-          {/* Permission / Test Alert Bar */}
+          {/* Permission / Test Sound Bar */}
           <div className="my-3 p-2 bg-neutral-900 border border-neutral-800 rounded flex items-center justify-between text-xs">
             {notifPermission !== 'granted' ? (
               <>
@@ -155,13 +196,13 @@ const TodoModal = ({ isOpen, onClose }) => {
             ) : (
               <>
                 <span className="text-green-400 text-[11px] flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" /> Alerts Active
+                  <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" /> Sound & Alerts Active
                 </span>
                 <button 
-                  onClick={() => triggerNotification('Test Alert', 'Device notifications are working correctly.')}
-                  className="bg-neutral-800 hover:bg-neutral-700 text-neutral-300 px-2 py-1 text-[10px] rounded flex items-center gap-1"
+                  onClick={() => triggerNotification('Test Alert', 'Sound and vibration are working.')}
+                  className="bg-neutral-800 hover:bg-neutral-700 text-neutral-300 px-2 py-1 text-[10px] rounded flex items-center gap-1 cursor-pointer"
                 >
-                  <Play size={10} /> Test Alert
+                  <Volume2 size={11} /> Test Sound
                 </button>
               </>
             )}
@@ -179,7 +220,7 @@ const TodoModal = ({ isOpen, onClose }) => {
               />
               <button 
                 type="submit" 
-                className="bg-white text-black font-bold px-4 text-xs rounded hover:bg-neutral-200 flex items-center justify-center"
+                className="bg-white text-black font-bold px-4 text-xs rounded hover:bg-neutral-200 flex items-center justify-center cursor-pointer"
               >
                 <Plus size={16} />
               </button>
@@ -225,7 +266,7 @@ const TodoModal = ({ isOpen, onClose }) => {
                   <div className="flex items-center gap-3 overflow-hidden">
                     <button
                       onClick={() => toggleTask(t.id)}
-                      className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${
+                      className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 cursor-pointer ${
                         t.completed ? 'bg-white border-white text-black' : 'border-neutral-600'
                       }`}
                     >
@@ -245,7 +286,7 @@ const TodoModal = ({ isOpen, onClose }) => {
 
                   <button 
                     onClick={() => deleteTask(t.id)} 
-                    className="text-neutral-600 hover:text-red-400 p-1 shrink-0 ml-2"
+                    className="text-neutral-600 hover:text-red-400 p-1 shrink-0 ml-2 cursor-pointer"
                   >
                     <Trash2 size={14} />
                   </button>
