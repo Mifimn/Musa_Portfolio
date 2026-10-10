@@ -64,14 +64,12 @@ const TodoModal = ({ isOpen, onClose }) => {
     }
   };
 
-  // Mobile-compatible notification trigger with sound & vibration
-  const triggerNotification = async (title, body) => {
-    // 1. Play synthesized 3x coin chime
+  // Added uniqueId parameter so notifications stack instead of overwrite
+  const triggerNotification = async (title, body, uniqueId = 'mifimn-default') => {
     playNotificationSound();
 
     if (!('Notification' in window) || Notification.permission !== 'granted') return;
 
-    // 2. Dispatch push notification to system tray
     try {
       if ('serviceWorker' in navigator) {
         const registration = await navigator.serviceWorker.ready;
@@ -80,18 +78,18 @@ const TodoModal = ({ isOpen, onClose }) => {
           icon: '/logo.png',
           badge: '/logo.png',
           vibrate: [150, 80, 150, 80, 150],
-          tag: 'mifimn-task-reminder',
+          tag: uniqueId, // <--- This ensures multiple alarms show up individually
           silent: false,
         });
       } else {
-        new Notification(title, { body, icon: '/logo.png' });
+        new Notification(title, { body, icon: '/logo.png', tag: uniqueId });
       }
     } catch (err) {
       console.error('Notification dispatch failed:', err);
     }
   };
 
-  // Clock checker (runs every 10 seconds)
+  // Clock checker (now runs every 1 second for exact timing)
   useEffect(() => {
     const interval = setInterval(() => {
       if (notifPermission !== 'granted') return;
@@ -103,14 +101,15 @@ const TodoModal = ({ isOpen, onClose }) => {
 
       tasks.forEach((t) => {
         if (!t.completed && t.time && t.time === currentTimeString && !t.notified) {
-          triggerNotification('Mifimn Reminder', `⏰ Time for: ${t.text}`);
+          // Pass the task ID as the unique tag
+          triggerNotification('Mifimn Reminder', `⏰ Time for: ${t.text}`, `task-${t.id}`);
 
           setTasks((prev) =>
             prev.map((item) => (item.id === t.id ? { ...item, notified: true } : item))
           );
         }
       });
-    }, 10000);
+    }, 1000); // <--- Reduced from 10000ms to 1000ms for instant triggering
 
     return () => clearInterval(interval);
   }, [tasks, notifPermission]);
@@ -120,7 +119,7 @@ const TodoModal = ({ isOpen, onClose }) => {
       const res = await Notification.requestPermission();
       setNotifPermission(res);
       if (res === 'granted') {
-        triggerNotification('Notifications Enabled', 'Mifimn reminders and audio alerts are now active.');
+        triggerNotification('Notifications Enabled', 'Mifimn reminders and audio alerts are now active.', 'system-alert');
       }
     }
   };
@@ -195,7 +194,7 @@ const TodoModal = ({ isOpen, onClose }) => {
                   <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" /> Sound & Alerts Active
                 </span>
                 <button 
-                  onClick={() => triggerNotification('Test Alert', '3x Coin success chime is active.')}
+                  onClick={() => triggerNotification('Test Alert', '3x Coin success chime is active.', `test-${Date.now()}`)}
                   className="bg-neutral-800 hover:bg-neutral-700 text-neutral-300 px-2 py-1 text-[10px] rounded flex items-center gap-1 cursor-pointer"
                 >
                   <Volume2 size={11} /> Test Sound
