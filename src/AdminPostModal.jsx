@@ -3,13 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, 
   Send, 
-  Smartphone, 
-  Monitor, 
-  Tablet, 
   CheckCircle, 
   AlertCircle, 
   Loader2, 
-  RefreshCw 
+  RefreshCw,
+  ExternalLink,
+  Layers
 } from 'lucide-react';
 
 const AdminPostModal = ({ isOpen, onClose, liveProjects = [], adminPass }) => {
@@ -18,7 +17,9 @@ const AdminPostModal = ({ isOpen, onClose, liveProjects = [], adminPass }) => {
   const [status, setStatus] = useState({ type: '', msg: '' });
   const [loading, setLoading] = useState(false);
 
-  // Set default selection when liveProjects loads or modal opens
+  // 3 distinct page paths to screenshot
+  const [paths, setPaths] = useState(['/', '', '']);
+
   useEffect(() => {
     if (liveProjects.length > 0 && !selectedRepoId) {
       handleSelect(liveProjects[0]);
@@ -27,11 +28,12 @@ const AdminPostModal = ({ isOpen, onClose, liveProjects = [], adminPass }) => {
 
   const selectedRepo = liveProjects.find((p) => p.id === Number(selectedRepoId)) || liveProjects[0];
 
-  // Auto-generate caption template based on chosen repo
   const handleSelect = (repo) => {
     if (!repo) return;
     setSelectedRepoId(repo.id);
     setStatus({ type: '', msg: '' });
+    setPaths(['/', '', '']);
+
     setCaption(
       `🚀 Just deployed: ${repo.name}\n\n` +
       `${repo.description || 'Fullstack application built with performance and modern architecture in mind.'}\n\n` +
@@ -41,17 +43,36 @@ const AdminPostModal = ({ isOpen, onClose, liveProjects = [], adminPass }) => {
     );
   };
 
+  // Helper to format full URL for subpages
+  const getFullUrl = (path) => {
+    if (!selectedRepo?.homepage) return '';
+    const base = selectedRepo.homepage.replace(/\/+$/, '');
+    if (!path || path.trim() === '' || path === '/') return base;
+    return `${base}/${path.replace(/^\/+/, '')}`;
+  };
+
+  const handlePathChange = (index, value) => {
+    const updated = [...paths];
+    updated[index] = value;
+    setPaths(updated);
+  };
+
   const handlePost = async () => {
     if (!selectedRepo) return;
     setLoading(true);
-    setStatus({ type: 'info', msg: 'Capturing 3 viewports and dispatching to X...' });
+    setStatus({ type: 'info', msg: 'Capturing selected pages and dispatching to X...' });
+
+    // Gather valid URLs to capture
+    const pageUrls = paths
+      .map(p => getFullUrl(p))
+      .filter(u => u && u.trim() !== '');
 
     try {
       const res = await fetch('/api/post-to-x', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          siteUrl: selectedRepo.homepage,
+          pageUrls,
           caption,
           adminPass,
         }),
@@ -90,7 +111,7 @@ const AdminPostModal = ({ isOpen, onClose, liveProjects = [], adminPass }) => {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
           transition={{ duration: 0.2 }}
-          className="bg-neutral-950 border border-neutral-800 w-full max-w-2xl p-6 rounded-lg text-white shadow-2xl relative"
+          className="bg-neutral-950 border border-neutral-800 w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 rounded-lg text-white shadow-2xl relative"
         >
           {/* Header */}
           <div className="flex justify-between items-center pb-4 border-b border-neutral-800 mb-6">
@@ -135,55 +156,63 @@ const AdminPostModal = ({ isOpen, onClose, liveProjects = [], adminPass }) => {
                 </select>
               </div>
 
-              {/* 3 Viewport Screenshot Queues */}
+              {/* 3 Configurable Subpages */}
               {selectedRepo && (
                 <div className="mb-5">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-[11px] text-neutral-400 tracking-wider">
-                      MEDIA ATTACHMENTS (3 VIEWPORTS QUEUED)
+                    <span className="text-[11px] text-neutral-400 tracking-wider flex items-center gap-1">
+                      <Layers size={12} /> PAGES TO SCREENSHOT (UP TO 3)
                     </span>
                     <button 
                       type="button" 
                       onClick={() => handleSelect(selectedRepo)}
                       className="text-[10px] text-neutral-500 hover:text-neutral-300 flex items-center gap-1"
                     >
-                      <RefreshCw size={10} /> Reset Caption
+                      <RefreshCw size={10} /> Reset Paths
                     </button>
                   </div>
+
+                  {/* Route Input Rows */}
+                  <div className="grid grid-cols-3 gap-2 mb-3">
+                    {paths.map((p, idx) => (
+                      <div key={idx} className="flex flex-col">
+                        <span className="text-[9px] text-neutral-500 mb-1">
+                          Page {idx + 1} {idx === 0 ? '(Home)' : '(Route/Path)'}
+                        </span>
+                        <input
+                          type="text"
+                          value={p}
+                          onChange={(e) => handlePathChange(idx, e.target.value)}
+                          placeholder={idx === 0 ? '/' : idx === 1 ? '/about' : '/dashboard'}
+                          className="w-full bg-black border border-neutral-800 text-neutral-200 text-[11px] p-2 rounded focus:outline-none focus:border-white transition-colors font-mono"
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Visual Previews */}
                   <div className="grid grid-cols-3 gap-2">
-                    {/* Desktop */}
-                    <div className="relative border border-neutral-800 bg-black h-24 overflow-hidden rounded group">
-                      <div className="absolute top-1 left-1 z-10 bg-black/80 px-1.5 py-0.5 text-[9px] flex items-center gap-1 text-neutral-400 rounded">
-                        <Monitor size={10} /> Desktop (1280x720)
-                      </div>
-                      <img 
-                        src={`https://s0.wp.com/mshots/v1/${encodeURIComponent(selectedRepo.homepage)}?w=1280&h=720`} 
-                        alt="Desktop Preview" 
-                        className="w-full h-full object-cover object-top" 
-                      />
-                    </div>
-                    {/* Tablet / Square */}
-                    <div className="relative border border-neutral-800 bg-black h-24 overflow-hidden rounded group">
-                      <div className="absolute top-1 left-1 z-10 bg-black/80 px-1.5 py-0.5 text-[9px] flex items-center gap-1 text-neutral-400 rounded">
-                        <Tablet size={10} /> Tablet (800x800)
-                      </div>
-                      <img 
-                        src={`https://s0.wp.com/mshots/v1/${encodeURIComponent(selectedRepo.homepage)}?w=800&h=800`} 
-                        alt="Tablet Preview" 
-                        className="w-full h-full object-cover object-top" 
-                      />
-                    </div>
-                    {/* Mobile */}
-                    <div className="relative border border-neutral-800 bg-black h-24 overflow-hidden rounded group">
-                      <div className="absolute top-1 left-1 z-10 bg-black/80 px-1.5 py-0.5 text-[9px] flex items-center gap-1 text-neutral-400 rounded">
-                        <Smartphone size={10} /> Mobile (390x844)
-                      </div>
-                      <img 
-                        src={`https://s0.wp.com/mshots/v1/${encodeURIComponent(selectedRepo.homepage)}?w=390&h=844`} 
-                        alt="Mobile Preview" 
-                        className="w-full h-full object-cover object-top" 
-                      />
-                    </div>
+                    {paths.map((p, idx) => {
+                      const fullUrl = getFullUrl(p);
+                      return (
+                        <div key={idx} className="relative border border-neutral-800 bg-black h-24 overflow-hidden rounded group">
+                          <div className="absolute top-1 left-1 z-10 bg-black/85 px-1.5 py-0.5 text-[8px] flex items-center gap-1 text-neutral-400 rounded max-w-[90%] truncate">
+                            <ExternalLink size={8} /> {p || '/'}
+                          </div>
+                          {fullUrl ? (
+                            <img 
+                              src={`https://s0.wp.com/mshots/v1/${encodeURIComponent(fullUrl)}?w=1280&h=720`} 
+                              alt={`Page ${idx + 1}`} 
+                              className="w-full h-full object-cover object-top" 
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-[10px] text-neutral-600">
+                              No Route
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -199,7 +228,7 @@ const AdminPostModal = ({ isOpen, onClose, liveProjects = [], adminPass }) => {
                   </span>
                 </div>
                 <textarea
-                  rows={5}
+                  rows={4}
                   value={caption}
                   onChange={(e) => setCaption(e.target.value)}
                   placeholder="Enter custom post copy..."
@@ -229,7 +258,7 @@ const AdminPostModal = ({ isOpen, onClose, liveProjects = [], adminPass }) => {
               >
                 {loading ? (
                   <>
-                    <Loader2 size={14} className="animate-spin" /> Transmitting 3 Screenshots & Text...
+                    <Loader2 size={14} className="animate-spin" /> Capturing Pages & Publishing...
                   </>
                 ) : (
                   <>
