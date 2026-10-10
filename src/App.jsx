@@ -32,9 +32,11 @@ import {
   Briefcase,
   Lock,
   X,
-  Loader2
+  Loader2,
+  CheckSquare
 } from 'lucide-react';
 import AdminPostModal from './AdminPostModal';
+import TodoModal from './TodoModal';
 
 // --- Utility ---
 function cn(...classes) {
@@ -247,6 +249,9 @@ const App = () => {
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const clickTimerRef = useRef(null);
 
+  // Todo modal state
+  const [isTodoOpen, setIsTodoOpen] = useState(false);
+
   useEffect(() => {
     fetch('https://api.github.com/users/Mifimn/repos?sort=updated&per_page=100')
       .then(res => res.json())
@@ -345,15 +350,25 @@ const App = () => {
           <div className="text-xl font-black tracking-tighter">MIFIMN</div>
         </div>
         
-        {/* Direct Link to Public File */}
-        <MagneticButton 
-          href="/Mifimn_CV.pdf" 
-          download="Mifimn_CV.pdf"
-          target="_blank"
-          className="border border-white bg-black px-6 py-2 text-xs font-bold hover:bg-white hover:text-black transition-colors flex items-center gap-2"
-        >
-          <Download size={14} /> CV_V1.0
-        </MagneticButton>
+        {/* Actions (Todo Quick Launcher + CV Download) */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setIsTodoOpen(true)}
+            className="p-2 border border-neutral-800 bg-black text-neutral-400 hover:text-white hover:border-white transition-colors rounded-full cursor-pointer"
+            title="Daily Tasks & Reminders"
+          >
+            <CheckSquare size={16} />
+          </button>
+
+          <MagneticButton 
+            href="/Mifimn_CV.pdf" 
+            download="Mifimn_CV.pdf"
+            target="_blank"
+            className="border border-white bg-black px-6 py-2 text-xs font-bold hover:bg-white hover:text-black transition-colors flex items-center gap-2"
+          >
+            <Download size={14} /> CV_V1.0
+          </MagneticButton>
+        </div>
       </header>
 
       {/* HERO SECTION */}
@@ -714,6 +729,12 @@ const App = () => {
         onClose={() => setIsAdminOpen(false)}
         liveProjects={liveProjects}
         adminPass={authenticatedPass}
+      />
+
+      {/* --- DAILY TODO / REMINDERS MODAL --- */}
+      <TodoModal 
+        isOpen={isTodoOpen}
+        onClose={() => setIsTodoOpen(false)}
       />
     </div>
   );
